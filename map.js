@@ -27,14 +27,14 @@ const youMarker = L.circleMarker(you, {
     color: '#ffffff',
     fillColor: '#ff6b81',
     fillOpacity: 1
-}).addTo(map).bindPopup('Я');
+}).addTo(map).bindPopup('Юра');
 
 const herMarker = L.circleMarker(her, {
     radius: 6,
     color: '#ffffff',
     fillColor: '#ff6b81',
     fillOpacity: 1
-}).addTo(map).bindPopup('Ты');
+}).addTo(map).bindPopup('Олеся💜');
 
 // =====================
 // ➖ ЛИНИЯ МЕЖДУ ТОЧКАМИ
