@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Цветовое поле</title>
+    <link rel="stylesheet" href="/main.css">
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body {
@@ -14,7 +15,7 @@
             align-items: center;
             color: #fff;
         }
-        .wrapper { width: 95%; max-width: 1200px; }
+        .wrapper { width: 95%; max-width: 1200px; padding-top: 100px }
         h1 { text-align: center; font-weight: 400; margin-bottom: 15px; }
 
         button {
@@ -29,8 +30,22 @@
             cursor: pointer;
             transition: background 0.2s ease;
         }
+        button.flexButton{
+            margin: 0 !important;
+            border-radius: 100%;
+            width: 50px !important;
+            height: 50px !important;
+            border: 1px solid white;
+            background: none;
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+        }
         button:hover { background: #ff4a66; }
-
+        button:disabled {opacity: 0.2; cursor: default}
+        .score{
+            margin-bottom: 30px;
+        }
         .board {
             display: grid;
             grid-template-columns: 40px repeat(24, 1fr);
@@ -60,12 +75,26 @@
     </style>
 </head>
 <body>
-
+<header>
+        <ul>
+            <li>
+                <a href="/">Главная</a>
+            </li>
+            <li>
+                <a href="/index.html#map">Карта</a>
+            </li>
+            <li>
+                <a href="/pages/colors.html">Цвета</a>
+            </li>
+        </ul>
+    </header>
 <div class="wrapper">
     <h1>Выбери цвет</h1>
+    <div class="score" style="display: flex; justify-content: center; align-items: center; gap: 80px;"><button class="flexButton" id="minus">-</button><h2 style="text-align: center;">Очки: <span id="scoreCount">0</span></h2> <button id="plus" class="flexButton">+</button></div>
     <button id="randomBtn">🎲 Случайный цвет</button>
+    <p id="coordText" style="text-align:center; margin-bottom: 20px;"></p>
     <div class="board" id="board"></div>
-    <div class="hint">Координаты — как в морском бое 🎯</div>
+    <button id="submitButton" disabled style="margin-top: 20px; background-color: rgb(12, 89, 12);">Подтвердить выбор</button>
 </div>
 
 <script>
@@ -74,6 +103,9 @@ const rows = 16; // вертикально
 const cols = 24; // горизонтально
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let selectedTile = null;
+let lastCenterTile = null;
+
+let score = 0;
 
 // храним все тайлы в массив для удобного выбора
 const tiles = [];
@@ -111,7 +143,7 @@ for (let y = 0; y < rows; y++) {
         tile.dataset.col = x;
 
         tile.addEventListener('click', () => {
-            selectTile(tile);
+            clickOnTile(tile);
         });
 
         board.appendChild(tile);
@@ -119,19 +151,89 @@ for (let y = 0; y < rows; y++) {
     }
 }
 
-// функция выбора тайла
 function selectTile(tile) {
     if (selectedTile) selectedTile.classList.remove('selected');
     tile.classList.add('selected');
     selectedTile = tile;
 }
 
+function clickOnTile(centerTile) {
+    lastCenterTile = centerTile;
+    let submit = document.getElementById("submitButton");
+    if (submit.disabled) {
+        submit.disabled = false;
+    }
+
+    // очистить старое выделение
+    tiles.forEach(tile => tile.classList.remove('selected'));
+
+    const centerRow = parseInt(centerTile.dataset.row);
+    const centerCol = parseInt(centerTile.dataset.col);
+
+    tiles.forEach(tile => {
+        const r = parseInt(tile.dataset.row);
+        const c = parseInt(tile.dataset.col);
+
+        if (
+            r >= centerRow - 2 && r <= centerRow + 2 &&
+            c >= centerCol - 2 && c <= centerCol + 2
+        ) {
+            tile.classList.add('selected');
+        }
+    });
+
+    coordText.textContent = `Выбран центр: ${centerTile.dataset.coord}`;
+}
+
+
 // кнопка случайного цвета
 document.getElementById('randomBtn').addEventListener('click', () => {
     const randomIndex = Math.floor(Math.random() * tiles.length);
     const randomTile = tiles[randomIndex];
     selectTile(randomTile);
+    const coordText = document.getElementById("coordText");
+    coordText.textContent = `Случайный цвет: ${randomTile.dataset.coord}`;
 });
+document.getElementById('submitButton').addEventListener('click', () => {
+    const guessed = prompt("Введите цвет, который был загадан (в формате 'A1'):");
+    if (!guessed || !lastCenterTile) return;
+
+    const targetTile = [...tiles].find(
+        t => t.dataset.coord === guessed
+    );
+
+    if (!targetTile || !targetTile.classList.contains('selected')) {
+        alert("Очки: 0");
+        return;
+    }
+
+    const cr = parseInt(lastCenterTile.dataset.row);
+    const cc = parseInt(lastCenterTile.dataset.col);
+    const tr = parseInt(targetTile.dataset.row);
+    const tc = parseInt(targetTile.dataset.col);
+
+    const distance = Math.max(
+    Math.abs(cr - tr),
+    Math.abs(cc - tc)
+);
+
+const maxDistance = 2; // радиус поля 5x5
+const currentScore = maxDistance - distance + 1;
+    alert(`Очки: ${currentScore}`);
+    let myScore = parseInt(document.getElementById('scoreCount').innerText, 10);
+    document.getElementById('scoreCount').innerText = myScore + currentScore;
+    score = myScore + currentScore;
+});
+document.getElementById('minus').addEventListener('click', () => {
+    if(score > 0){
+        score--;
+    }
+    document.getElementById('scoreCount').innerText = score;
+})
+document.getElementById('plus').addEventListener('click', () => {
+    score++;
+    document.getElementById('scoreCount').innerText = score;
+})
 </script>
 
 </body>
